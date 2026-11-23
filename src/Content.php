@@ -14,9 +14,12 @@ use UnitEnum;
  */
 final readonly class Content
 {
+    /** @var list<Block> the body, in print order: never a null, so a template sees real blocks alone */
+    public array $blocks;
+
     /**
      * @param  UnitEnum  $mail  which mail this is: the sending package's own case, such as Withdrawals\Enums\Alert::failed
-     * @param  list<Block>  $blocks  the body, in print order
+     * @param  list<?Block>  $blocks  the body, in print order; a null is a block left out, such as an optional one
      * @param  string|null  $greeting  the package's greeting, such as "Hi Sam,"; a template may word its own
      * @param  string|null  $preheader  the inbox preview; null lets the client take the first line
      * @param  bool  $error  something failed and its reader has to act
@@ -26,9 +29,11 @@ final readonly class Content
         public Audience $audience,
         public string $subject,
         public string $heading,
-        public array $blocks,
+        array $blocks,
         public ?string $greeting = null,
         public ?string $preheader = null,
         public bool $error = false,
-    ) {}
+    ) {
+        $this->blocks = array_values(array_filter($blocks, static fn (?Block $block): bool => $block !== null));
+    }
 }

@@ -71,7 +71,7 @@ absolute URL: escape it with `e()` in an `href`.
 | `audience`  | `Audience`    | `Audience::member` or `Audience::staff`.                                                        |
 | `subject`   | `string`      | The subject line.                                                                               |
 | `heading`   | `string`      | The title of the mail.                                                                          |
-| `blocks`    | `list<Block>` | The body, in print order.                                                                       |
+| `blocks`    | `list<Block>` | The body, in print order. A `null` block passed in is left out, so this list holds no `null`.   |
 | `greeting`  | `?string`     | The package's greeting, such as `Hi Sam,`. Your template may word its own.                      |
 | `preheader` | `?string`     | The inbox preview. `null` lets the client take the first line.                                  |
 | `error`     | `bool`        | Something failed and its reader has to act.                                                     |
@@ -90,7 +90,8 @@ block as plain-text lines:
 | `Code`    | `code`                                      | A one-time code, to set apart.            | The code.                       |
 
 `Facts` drops a row whose value is blank and puts every value on one line. Its rows are a list, never `label => value`:
-two rows may share a label. A sending package builds a mail's content like this:
+two rows may share a label. A sending package builds a mail's content like this, one block per line, with `null`
+for a block it leaves out:
 
 ```php
 new Content(
@@ -101,11 +102,20 @@ new Content(
     blocks: [
         new Line('The payout provider refused it.'),
         new Facts([new Fact('Withdrawal', '#42'), new Fact('Method', 'PayPal')]),
+        $reply === null ? null : new Panel($reply),
         new Button('Review withdrawal', $url),
     ],
     error: true,
 );
 ```
+
+## Upgrading
+
+### From 1.0
+
+Nothing to change. New: `Content` takes `null` in `blocks` and leaves it out, so an optional block is written in its
+place, such as `$reply === null ? null : new Panel($reply)`. Code that writes one requires `^1.1`, as 1.0 hands the
+`null` to the template. `$content->blocks` still holds real blocks alone.
 
 ## Licence
 
