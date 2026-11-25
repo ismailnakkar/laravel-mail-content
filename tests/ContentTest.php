@@ -32,6 +32,34 @@ final class ContentTest extends TestCase
         $this->assertSame([], $this->content([null, null])->blocks);
     }
 
+    public function test_with_blocks_keeps_every_other_field_drops_nulls_and_leaves_the_original_as_it_was(): void
+    {
+        $original = new Line('Original');
+        $content = new Content(
+            mail: Alert::failed,
+            audience: Audience::staff,
+            subject: 'Subject',
+            heading: 'Heading',
+            blocks: [$original],
+            greeting: 'Hi Sam,',
+            preheader: 'Preview',
+            error: true,
+        );
+        $line = new Line('Replaced');
+        $button = new Button('Review', 'https://example.test/review');
+
+        $changed = $content->withBlocks([null, $line, null, $button]);
+
+        $this->assertSame([$line, $button], $changed->blocks);
+        $this->assertSame([$original], $content->blocks);
+        // Every other field matches. The fixture sets each one off its default, so a field left
+        // uncopied fails here; a field Content gains later needs a non-default value above too.
+        $this->assertSame(
+            [...get_object_vars($content), 'blocks' => null],
+            [...get_object_vars($changed), 'blocks' => null],
+        );
+    }
+
     /** @param  list<?Block>  $blocks */
     private function content(array $blocks): Content
     {

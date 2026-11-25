@@ -36,4 +36,23 @@ final readonly class Content
     ) {
         $this->blocks = array_values(array_filter($blocks, static fn (?Block $block): bool => $block !== null));
     }
+
+    /**
+     * This mail with another body, such as a template's own blocks around the package's: every other field kept.
+     *
+     * @param  list<?Block>  $blocks  the body, in print order; a null is a block left out, as in the constructor
+     */
+    public function withBlocks(array $blocks): self
+    {
+        return new self(
+            mail: $this->mail,
+            audience: $this->audience,
+            subject: $this->subject,
+            heading: $this->heading,
+            blocks: $blocks,
+            greeting: $this->greeting,
+            preheader: $this->preheader,
+            error: $this->error,
+        );
+    }
 }

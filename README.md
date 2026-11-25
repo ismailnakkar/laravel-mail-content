@@ -76,6 +76,10 @@ absolute URL: escape it with `e()` in an `href`.
 | `preheader` | `?string`     | The inbox preview. `null` lets the client take the first line.                                  |
 | `error`     | `bool`        | Something failed and its reader has to act.                                                     |
 
+`$content->withBlocks($blocks)` returns the same mail with another body, every other field kept and a `null` block left
+out as in the constructor. A template that adds, drops or reorders a package's blocks builds its `Content` with it, so
+a field `Content` gains in a minor carries through.
+
 The blocks, each a readonly class in `MailContent\Blocks` implementing `Block`, whose `lines(): list<string>` gives the
 block as plain-text lines:
 
@@ -110,6 +114,12 @@ new Content(
 ```
 
 ## Upgrading
+
+### From 1.1
+
+Nothing to change. New: `Content::withBlocks(list<?Block> $blocks)`, the same mail with another body. Code that
+rebuilds a `Content` with `new Content(...)` from another one's fields only to change `blocks` can call
+`$content->withBlocks(...)` instead and require `^1.2`.
 
 ### From 1.0
 
