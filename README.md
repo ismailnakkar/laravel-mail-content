@@ -52,8 +52,8 @@ or for a staff alert the staff notifiable.
 While the config names no template, a package uses `MailContent\PlainTemplate`: Laravel's own notification layout. The
 heading is the line Laravel prints large, the greeting the first line, the first button the action, a `LinkedLine` a
 paragraph with a Markdown link, and every other block prints its `lines()` in order; `error` makes it Laravel's error
-mail. Its lines and action text are
-`HtmlString`s of character references, so a test compares `html_entity_decode((string)$line)`.
+mail. Its lines and action text are `HtmlString`s of character references, so a test compares
+`html_entity_decode((string)$line)`.
 
 ## Escaping
 
