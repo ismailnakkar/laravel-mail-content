@@ -15,6 +15,7 @@ use MailContent\Blocks\Fact;
 use MailContent\Blocks\Facts;
 use MailContent\Blocks\Line;
 use MailContent\Blocks\Link;
+use MailContent\Blocks\LinkedLine;
 use MailContent\Blocks\Links;
 use MailContent\Blocks\Panel;
 use MailContent\Content;
@@ -85,6 +86,21 @@ final class PlainTemplateTest extends TestCase
 
         $this->assertStringContainsString('**Label**: *not emphasis*', $text);
         $this->assertStringContainsString('Pay <now>: https://example.test/pay', $text);
+    }
+
+    public function test_a_linked_line_prints_its_link_inside_the_sentence_and_only_the_link_is_markup(): void
+    {
+        $message = $this->build([new LinkedLine('If *not*, :link <now>.', new Link('contact [us]', 'https://example.test/contact?a=1&b=2'))]);
+
+        $html = (string)$message->render();
+
+        // The theme's CSS inliner gives the anchor a style.
+        $this->assertMatchesRegularExpression('~If \\*not\\*, <a href="https://example\\.test/contact\\?a=1&amp;b=2"[^>]*>contact \\[us\\]</a> &lt;now&gt;\\.~', $html);
+        $this->assertStringNotContainsString('<em>', $html);
+
+        $text = app(Markdown::class)->renderText($message->markdown, $message->data())->toHtml();
+
+        $this->assertStringContainsString('If *not*, [contact [us]](https://example.test/contact?a=1&b=2) <now>.', $text);
     }
 
     public function test_multibyte_text_prints_whole(): void

@@ -12,6 +12,7 @@ use MailContent\Blocks\Fact;
 use MailContent\Blocks\Facts;
 use MailContent\Blocks\Line;
 use MailContent\Blocks\Link;
+use MailContent\Blocks\LinkedLine;
 use MailContent\Blocks\Links;
 use MailContent\Blocks\Panel;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -37,6 +38,14 @@ final class LinesTest extends TestCase
         ];
         yield 'a button, text: url' => [new Button('Review', 'https://example.test/review'), ['Review: https://example.test/review']];
         yield 'a code, the code' => [new Code('123456'), ['123456']];
+        yield 'a linked line, text <url> in the link\'s place' => [
+            new LinkedLine('If not, :link now.', new Link('contact support', 'https://example.test/contact')),
+            ['If not, contact support <https://example.test/contact> now.'],
+        ];
+        yield 'a linked line without the placeholder, the link after the text' => [
+            new LinkedLine('If not, contact us. ', new Link('Contact', 'https://example.test/contact')),
+            ['If not, contact us. Contact <https://example.test/contact>'],
+        ];
     }
 
     /** @param  list<string>  $lines */
@@ -44,5 +53,12 @@ final class LinesTest extends TestCase
     public function test_a_block_gives_its_plain_text_lines(Block $block, array $lines): void
     {
         $this->assertSame($lines, $block->lines());
+    }
+
+    public function test_a_linked_line_splits_at_the_first_placeholder_only(): void
+    {
+        $line = new LinkedLine(':link first, :link stays text', new Link('Here', 'https://example.test'));
+
+        $this->assertSame(['', ' first, :link stays text'], [$line->before, $line->after]);
     }
 }

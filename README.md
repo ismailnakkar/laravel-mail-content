@@ -50,8 +50,9 @@ for: the member, even when the mail goes to a routed address (such as the new ad
 or for a staff alert the staff notifiable.
 
 While the config names no template, a package uses `MailContent\PlainTemplate`: Laravel's own notification layout. The
-heading is the line Laravel prints large, the greeting the first line, the first button the action, and every other
-block prints its `lines()` in order; `error` makes it Laravel's error mail. Its lines and action text are
+heading is the line Laravel prints large, the greeting the first line, the first button the action, a `LinkedLine` a
+paragraph with a Markdown link, and every other block prints its `lines()` in order; `error` makes it Laravel's error
+mail. Its lines and action text are
 `HtmlString`s of character references, so a test compares `html_entity_decode((string)$line)`.
 
 ## Escaping
@@ -59,7 +60,8 @@ block prints its `lines()` in order; `error` makes it Laravel's error mail. Its 
 All text in the contract is plain text, never markup, and your template escapes it. A payer's reply, a plan label or a
 member's name can hold `_`, `*`, `[..](..)` and `< >`. Escape for where it lands: `e()` in an HTML view, and in Laravel's
 Markdown mail also Markdown's own marks, which `PlainTemplate` writes as character references. A block's `url` is an
-absolute URL: escape it with `e()` in an `href`.
+absolute URL: escape it with `e()` in an `href`. A `LinkedLine` is the one block that becomes markup, and only its link:
+print `before` escaped, then the link as an anchor whose text and `href` you escape, then `after` escaped.
 
 ## The contract
 
@@ -83,15 +85,21 @@ a field `Content` gains in a minor carries through.
 The blocks, each a readonly class in `MailContent\Blocks` implementing `Block`, whose `lines(): list<string>` gives the
 block as plain-text lines:
 
-| Block     | Properties                                  | Prints                                    | `lines()`                       |
-|-----------|---------------------------------------------|-------------------------------------------|---------------------------------|
-| `Line`    | `text`                                      | A paragraph.                              | Its text.                       |
-| `Bullets` | `items`, a list of strings                  | A list.                                   | Each item.                      |
-| `Facts`   | `rows`, a list of `Fact` (`label`, `value`) | Label and value rows.                     | `Label: value` per row.         |
-| `Panel`   | `text`                                      | Text set apart. It keeps its line breaks. | Its lines, blank ones dropped.  |
-| `Links`   | `links`, a list of `Link` (`text`, `url`)   | Links in a list.                          | `text: url` per link.           |
-| `Button`  | `text`, `url`                               | The thing to do.                          | `text: url`.                    |
-| `Code`    | `code`                                      | A one-time code, to set apart.            | The code.                       |
+| Block        | Properties                                   | Prints                                    | `lines()`                                   |
+|--------------|----------------------------------------------|-------------------------------------------|---------------------------------------------|
+| `Line`       | `text`                                       | A paragraph.                              | Its text.                                   |
+| `LinkedLine` | `text`, `link` (a `Link`), `before`, `after` | A paragraph with the link inside it.      | The text, `text <url>` in the link's place. |
+| `Bullets`    | `items`, a list of strings                   | A list.                                   | Each item.                                  |
+| `Facts`      | `rows`, a list of `Fact` (`label`, `value`)  | Label and value rows.                     | `Label: value` per row.                     |
+| `Panel`      | `text`                                       | Text set apart. It keeps its line breaks. | Its lines, blank ones dropped.              |
+| `Links`      | `links`, a list of `Link` (`text`, `url`)    | Links in a list.                          | `text: url` per link.                       |
+| `Button`     | `text`, `url`                                | The thing to do.                          | `text: url`.                                |
+| `Code`       | `code`                                       | A one-time code, to set apart.            | The code.                                   |
+
+A `LinkedLine`'s `text` holds `LinkedLine::PLACEHOLDER`, `:link`, where the link's text goes, so each language places
+the link where its grammar wants: `new LinkedLine(__('If not, :link now.'), new Link(__('contact support'), $url))`.
+`before` and `after` are the text on either side of it, split at the first `:link`; without one, the link follows the
+text. Translate the sentence without a `link` replacement, so `:link` stays in it.
 
 `Facts` drops a row whose value is blank and puts every value on one line. Its rows are a list, never `label => value`:
 two rows may share a label. A sending package builds a mail's content like this, one block per line, with `null`
@@ -114,6 +122,13 @@ new Content(
 ```
 
 ## Upgrading
+
+### From 1.2
+
+Nothing to change. New: the `LinkedLine` block, a paragraph with one link inside it, which `PlainTemplate` prints as a
+Markdown link. A template with no layout for it prints its `lines()`, the text with `text <url>` in the link's place:
+give it one to print the link inline ([laravel-mail-frame](https://github.com/ismailnakkar/laravel-mail-frame) 0.8 does).
+A package that sends one requires `^1.3`.
 
 ### From 1.1
 
